@@ -1,0 +1,103 @@
+syntax = "proto3";
+
+package pb_schemas.inventory.v1;
+
+import "google/protobuf/timestamp.proto";
+import "google/rpc/status.proto"; 
+
+option go_package = "ops-monorepo/protogen/go/inventory/v1;inventoryv1";
+
+// Common error types
+message ErrorDetail {
+  string field = 1;       // e.g., "sku", "quantity"
+  string description = 2; // e.g., "SKU cannot be empty"
+}
+
+message InventoryError {
+  string code = 1;                  // e.g., "INVALID_SKU"
+  repeated ErrorDetail details = 2; // Field-specific errors
+  google.rpc.Status status = 3;     // Standard status info
+}
+
+// Data messages (unchanged from your original)
+message SKUInventory {
+  string sku = 1;
+  double current_stock = 2;
+  double reserved_stock = 3;
+  double min_stock_level = 4;
+  double max_stock_level = 5;
+  google.protobuf.Timestamp last_stock_update = 6;
+}
+
+message ReservedSKU {
+  string sku = 1;
+  double quantity = 2;
+  google.protobuf.Timestamp reserved_at = 3;
+}
+
+message Reserve {
+  string order_id = 1;
+  string reserve_id = 2;
+  repeated ReservedSKU reserved_skus = 3;
+  google.protobuf.Timestamp created_at = 4;
+  string status = 5;
+}
+
+// Requests (unchanged)
+message ReserveStockRequest {
+  string order_id = 1;
+  repeated ReservedSKU skus_to_reserve = 2;
+}
+
+message ReleaseStockRequest {
+  string order_id = 1;
+  string reserve_id = 2;
+}
+
+message CheckStockRequest {
+  string sku = 1;
+  double quantity = 2;
+}
+
+// Improved Responses
+message CheckStockResponse {
+  oneof result {
+    Success success = 1;
+    InventoryError error = 2;
+  }
+
+  message Success {
+    bool is_available = 1;
+    double available_quantity = 2;
+    SKUInventory inventory = 3;
+  }
+}
+
+message ReserveStockResponse {
+  oneof result {
+    ReserveSuccess success = 1;
+    InventoryError error = 2;
+  }
+
+  message ReserveSuccess {
+    Reserve reserve = 1;
+  }
+}
+
+message ReleaseStockResponse {
+  oneof result {
+    ReleaseSuccess success = 1;
+    InventoryError error = 2;
+  }
+
+  message ReleaseSuccess {
+    Reserve reserve = 1;
+    repeated SKUInventory updated_inventories = 2;
+  }
+}
+
+service InventoryService {
+  rpc CheckStock(CheckStockRequest) returns (CheckStockResponse);
+  rpc ReserveStock(ReserveStockRequest) returns (ReserveStockResponse);
+  rpc ReleaseStock(ReleaseStockRequest) returns (ReleaseStockResponse);
+}

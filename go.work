@@ -1,0 +1,16 @@
+go 1.24.4
+
+use (
+	// generated protobuf handler
+	./pb_schemas
+
+	// services
+	./services/svc-inventory
+	./services/svc-order
+
+	// shared library
+	./shared-libs/env
+	./shared-libs/errlib
+	./shared-libs/jwt
+	./shared-libs/storage
+)

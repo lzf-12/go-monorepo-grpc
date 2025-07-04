@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package pb_schemas.user.v1;
+
+option go_package = "ops-monorepo/protogen/go/user/v1;userv1";
+
+// auth.proto
+service UserService {
+  rpc ValidateToken (ValidateTokenRequest) returns (ValidateTokenResponse);
+}
+
+message ValidateTokenRequest {
+  string token = 1;
+}
+
+message ValidateTokenResponse {
+  bool valid = 1;
+  string user_email = 2;
+  repeated string roles = 3;
+}
