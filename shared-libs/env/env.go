@@ -37,9 +37,9 @@ func (ev EnvVariable) Bool() bool {
 	return val == "true" || val == "1" || val == "yes" || val == "on"
 }
 
-func (ev EnvVariable) Int() (int, error) {
-	return strconv.Atoi(ev.stringVal)
-}
+// func (ev EnvVariable) Int() (int, error) {
+// 	return strconv.Atoi(ev.stringVal)
+// }
 
 func (ev EnvVariable) IntDefault(defaultValue int) int {
 	if val, err := strconv.Atoi(ev.stringVal); err == nil {

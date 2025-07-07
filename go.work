@@ -6,7 +6,9 @@ use (
 
 	// services
 	./services/svc-inventory
+	./services/svc-notification
 	./services/svc-order
+	./services/svc-user
 
 	// shared library
 	./shared-libs/env
