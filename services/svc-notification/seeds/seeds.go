@@ -2,47 +2,64 @@ package seeds
 
 import (
 	"context"
-	"fmt"
+	_ "embed"
 	"ops-monorepo/shared-libs/logger"
 	pg "ops-monorepo/shared-libs/storage/postgres"
-	"os"
-	"path/filepath"
-	"runtime"
+	storage "ops-monorepo/shared-libs/storage/postgres"
 )
 
+//go:embed default_tables.sql
+var DefaultTableSQL []byte
+
+//go:embed default_data.sql
+var DefaultDataSQL []byte
+
+var CheckIfSchemaExist string
+
 func ExecuteDefaultTableScripts(db *pg.PostgresPgx, log logger.Logger) error {
-	// Get the current file's directory
-	_, filename, _, ok := runtime.Caller(0)
-	if !ok {
-		return fmt.Errorf("failed to get current file path")
-	}
-	dir := filepath.Dir(filename)
 
-	// Read and execute default_tables.sql
-	tablesPath := filepath.Join(dir, "default_tables.sql")
-	tablesSQL, err := os.ReadFile(tablesPath)
+	// check if schemas already exist
+	CheckIfSchemaExist = `SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'order_service';`
+
+	var rows storage.PgxRows
+
+	rows, err := db.Pool().Query(context.Background(), CheckIfSchemaExist)
 	if err != nil {
-		return fmt.Errorf("failed to read default_tables.sql: %w", err)
+		return err
+	}
+	defer rows.Close()
+
+	schemaTables := []string{}
+	for rows.Next() {
+		var table string
+		rows.Scan(&table)
+		schemaTables = append(schemaTables, table)
 	}
 
-	if _, err := db.Pool().Exec(context.Background(), string(tablesSQL)); err != nil {
-		return fmt.Errorf("failed to execute default_tables.sql: %w", err)
+	// if schema already has table, skip
+	if len(schemaTables) > 0 {
+		log.Info("schema and tables already exist, seeds script skipped..")
+		return nil
 	}
 
-	log.Info("default_tables.sql executed successfully")
+	if len(DefaultTableSQL) < 1 {
+		log.Info("seeds sql not loaded")
+	}
 
-	// Read and execute default_data.sql
-	dataPath := filepath.Join(dir, "default_data.sql")
-	dataSQL, err := os.ReadFile(dataPath)
+	// proceed if schema and tables not exist
+	_, err = db.Pool().Exec(context.Background(), string(DefaultTableSQL))
 	if err != nil {
-		return fmt.Errorf("failed to read default_data.sql: %w", err)
+		log.Fatalf("create default table failed: %v", err)
+		return err
 	}
 
-	if _, err := db.Pool().Exec(context.Background(), string(dataSQL)); err != nil {
-		return fmt.Errorf("failed to execute default_data.sql: %w", err)
+	_, err = db.Pool().Exec(context.Background(), string(DefaultDataSQL))
+	if err != nil {
+		log.Fatalf("seeding default data failed: %v", err)
+		return err
 	}
 
-	log.Info("default_data.sql executed successfully")
+	log.Info("seeds scripts successfully executed..")
 
 	return nil
 }

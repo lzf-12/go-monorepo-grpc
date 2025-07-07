@@ -34,7 +34,7 @@ type (
 
 func NewOrderUsecase(sql repository.IOrderSQLRepository, log logger.Logger, invClient grpc.InvClient) IOrderUsecase {
 	return &OrderUsecase{
-		logger:              log.WithComponent("usecase"),
+		logger:              log,
 		repoSQL:             sql,
 		inventoryGrpcClient: invClient,
 	}
@@ -108,7 +108,7 @@ func (u *OrderUsecase) NewOrder(ctx context.Context, request types.OrderRequest)
 	// reserve stock
 	reserveResp, errReserv := u.inventoryGrpcClient.ReserveStock(ctx, &inventoryv1.StandardInventoryRequest{})
 	var failedReserveStockStatus []*model.OrderedItemStockStatus
-	if errReserv != nil {
+	if errReserv != nil && reserveResp != nil {
 		failedReserveStockStatus = reserveResp.FailedProcessedItems.GetItems()
 	}
 
@@ -118,10 +118,10 @@ func (u *OrderUsecase) NewOrder(ctx context.Context, request types.OrderRequest)
 		// update order status to failed reservation
 		if err := u.repoSQL.UpdateOrderStatus(ctx, orderId, model.ORDER_STATUS_FAILED_RESERVATION); err != nil {
 			u.logger.Errorf("failed update order status to reserved", "error", err.Error())
-			return nil, failedReserveStockStatus, errlib.ErrDBQuery()
+			return nil, reserveResp.FailedProcessedItems.Items, errlib.ErrDBQuery()
 		}
 
-		return &model.OrderWithItems{Order: order, Items: items}, failedReserveStockStatus, nil
+		return &model.OrderWithItems{Order: order, Items: items}, reserveResp.FailedProcessedItems.Items, nil
 	}
 	if errReserv != nil {
 		// update order to canceled

@@ -1,0 +1,182 @@
+version: '3.8'
+
+networks:
+  ops-network:
+    driver: bridge
+
+volumes:
+  user_db_data:
+  notification_db_data:
+  inventory_db_data:
+  order_db_data:
+
+services:
+  # User Database
+  user-db:
+    image: postgres:15-alpine
+    container_name: user-db
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_USER_DB}
+      POSTGRES_USER: ${POSTGRES_USER_SERVICE}
+      POSTGRES_PASSWORD: ${POSTGRES_USER_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=en_US.UTF-8 --lc-ctype=en_US.UTF-8"
+    volumes:
+      - user_db_data:/var/lib/postgresql/data
+    ports:
+      - "5436:5432"
+    networks:
+      - ops-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER_SERVICE} -d ${POSTGRES_USER_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # User Service
+  svc-user:
+    build:
+      context: .
+      dockerfile: services/svc-user/Dockerfile
+    container_name: svc-user
+    env_file:
+      - services/svc-user/.env
+    ports:
+      - "50053:50053"
+      - "8080:8080"
+    networks:
+      - ops-network
+    depends_on:
+      user-db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Notification Database
+  notification-db:
+    image: postgres:15-alpine
+    container_name: notification-db
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_NOTIFICATION_DB}
+      POSTGRES_USER: ${POSTGRES_NOTIFICATION_SERVICE}
+      POSTGRES_PASSWORD: ${POSTGRES_NOTIFICATION_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=en_US.UTF-8 --lc-ctype=en_US.UTF-8"
+    volumes:
+      - notification_db_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - ops-network
+    depends_on:
+      svc-user:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_NOTIFICATION_SERVICE} -d ${POSTGRES_NOTIFICATION_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Notification Service
+  svc-notification:
+    build:
+      context: .
+      dockerfile: services/svc-notification/Dockerfile
+    container_name: svc-notification
+    env_file:
+      - services/svc-notification/.env
+    ports:
+      - "50052:50052"
+    networks:
+      - ops-network
+    depends_on:
+      notification-db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Inventory Database
+  inventory-db:
+    image: postgres:15-alpine
+    container_name: inventory-db
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_INVENTORY_DB}
+      POSTGRES_USER: ${POSTGRES_INVENTORY_SERVICE}
+      POSTGRES_PASSWORD: ${POSTGRES_INVENTORY_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=en_US.UTF-8 --lc-ctype=en_US.UTF-8"
+    volumes:
+      - inventory_db_data:/var/lib/postgresql/data
+    ports:
+      - "5434:5432"
+    networks:
+      - ops-network
+    depends_on:
+      svc-notification:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_INVENTORY_SERVICE} -d ${POSTGRES_INVENTORY_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Inventory Service
+  svc-inventory:
+    build:
+      context: .
+      dockerfile: services/svc-inventory/Dockerfile
+    container_name: svc-inventory
+    env_file:
+      - services/svc-inventory/.env
+    ports:
+      - "50051:50051"
+    networks:
+      - ops-network
+    depends_on:
+      inventory-db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Order Database
+  order-db:
+    image: postgres:15-alpine
+    container_name: order-db
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_ORDER_DB}
+      POSTGRES_USER: ${POSTGRES_ORDER_SERVICE}
+      POSTGRES_PASSWORD: ${POSTGRES_ORDER_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=en_US.UTF-8 --lc-ctype=en_US.UTF-8"
+    volumes:
+      - order_db_data:/var/lib/postgresql/data
+    ports:
+      - "5435:5432"
+    networks:
+      - ops-network
+    depends_on:
+      svc-inventory:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_ORDER_SERVICE} -d ${POSTGRES_ORDER_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Order Service
+  svc-order:
+    build:
+      context: .
+      dockerfile: services/svc-order/Dockerfile
+    container_name: svc-order
+    env_file:
+      - services/svc-order/.env
+    ports:
+      - "8081:8080"
+    networks:
+      - ops-network
+    depends_on:
+      order-db:
+        condition: service_healthy
+    restart: unless-stopped

@@ -1,6 +1,6 @@
 # User Service
 
-A comprehensive user authentication service providing both gRPC and HTTP APIs for user management, JWT authentication, and token validation.
+simple user authentication service providing both gRPC and HTTP APIs for user management, JWT authentication, and token validation.
 
 ## Features
 
@@ -22,7 +22,7 @@ A comprehensive user authentication service providing both gRPC and HTTP APIs fo
 Set the following environment variables or create a `.env` file:
 
 ```bash
-# Application Configuration
+# Example Application Configuration
 ENV=development
 APPNAME=svc-user
 DEBUG_MODE=true
@@ -35,8 +35,8 @@ INIT_SEEDS=true
 
 # JWT Configuration
 JWT_SECRET=your-super-secret-jwt-key
-JWT_ACCESS_DURATION=15    # Access token duration in minutes
-JWT_REFRESH_DURATION=24   # Refresh token duration in hours
+JWT_ACCESS_DURATION=15m
+JWT_REFRESH_DURATION=24h
 ```
 
 ## Installation
@@ -384,6 +384,74 @@ func validateUserToken(tokenString string) (*User, error) {
    - Check password hashing/verification
    - Verify user exists and is active
    - Check for case sensitivity in email addresses
+
+## Dependencies
+
+### Service Dependencies
+- **Database**: PostgreSQL (port 5432)
+- **No service dependencies** - This is a foundational service
+
+### Docker Dependencies
+- **user-db**: PostgreSQL container for user data storage
+
+### Service Startup Order
+1. **user-db** (PostgreSQL database)
+2. **svc-user** (This service)
+
+## Docker Deployment
+
+### Building and Running with Docker (from service directory)
+
+```bash
+# Navigate to service directory
+cd services/svc-user
+
+# Build Docker image (builds with monorepo context)
+make docker-build
+
+# Run with Docker (standalone)
+make docker-run
+
+# Or run with environment file
+make docker-run-env
+
+# Stop the container
+make docker-stop
+```
+
+### Manual Docker Commands
+
+```bash
+# Build from service directory
+docker build -t svc-user -f Dockerfile ../../
+
+# Run with port mapping
+docker run --rm -p 50053:50053 -p 8080:8080 svc-user
+
+# Run with environment file
+docker run --rm --env-file .env -p 50053:50053 -p 8080:8080 svc-user
+```
+
+### Docker Compose Deployment
+
+```bash
+# From root directory
+docker-compose up svc-user
+```
+
+### Environment Variables for Docker
+```bash
+ENV=production
+APPNAME=svc-user
+DEBUG_MODE=false
+PORT=50053
+HTTP_PORT=8080
+DB_URI=postgres://user_service:user_password123@user-db:5432/user_db?sslmode=disable
+INIT_SEEDS=true
+JWT_SECRET=super-secret-jwt-key-for-production
+JWT_ACCESS_DURATION=15m
+JWT_REFRESH_DURATION=24h
+```
 
 ## Support
 

@@ -16,6 +16,7 @@ use (
 	./shared-libs/grpc
 	./shared-libs/jwt
 	./shared-libs/logger
+	./shared-libs/middleware
 	./shared-libs/regexp
 	./shared-libs/storage
 )

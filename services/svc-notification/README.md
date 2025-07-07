@@ -219,6 +219,78 @@ make docker-run
    - Verify SMTP server connectivity
    - Check firewall settings for outbound SMTP ports
 
+## Dependencies
+
+### Service Dependencies
+- **Database**: PostgreSQL (port 5432)
+- **svc-user**: Required for service startup sequence (no direct communication)
+
+### Docker Dependencies
+- **notification-db**: PostgreSQL container for email logs storage
+- **svc-user**: Must be started before this service in Docker Compose
+
+### Service Startup Order
+1. **user-db** (PostgreSQL database)
+2. **svc-user** (User service)
+3. **notification-db** (PostgreSQL database)
+4. **svc-notification** (This service)
+
+## Docker Deployment
+
+### Building and Running with Docker (from service directory)
+
+```bash
+# Navigate to service directory
+cd services/svc-notification
+
+# Build Docker image (builds with monorepo context)
+make docker-build
+
+# Run with Docker (standalone)
+make docker-run
+
+# Or run with environment file
+make docker-run-env
+
+# Stop the container
+make docker-stop
+```
+
+### Manual Docker Commands
+
+```bash
+# Build from service directory
+docker build -t svc-notification -f Dockerfile ../../
+
+# Run with port mapping
+docker run --rm -p 50052:50052 svc-notification
+
+# Run with environment file
+docker run --rm --env-file .env -p 50052:50052 svc-notification
+```
+
+### Docker Compose Deployment
+
+```bash
+# From root directory
+docker-compose up svc-notification
+```
+
+### Environment Variables for Docker
+```bash
+ENV=production
+APPNAME=svc-notification
+DEBUG_MODE=false
+PORT=50052
+DB_URI=postgres://notification_service:notification_password123@notification-db:5432/notification_db?sslmode=disable
+INIT_SEEDS=true
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USERNAME=your-email@gmail.com
+SMTP_PASSWORD=your-app-password
+SMTP_FROM=noreply@yourcompany.com
+```
+
 ## Support
 
 For issues and questions, please check the logs in the database and application output for detailed error messages.

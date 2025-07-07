@@ -60,7 +60,7 @@ func (r *userSQLRepository) CreateUser(ctx context.Context, user *model.User) er
 
 func (r *userSQLRepository) GetUserByEmail(ctx context.Context, email string) (*model.User, error) {
 	query := `
-		SELECT id, email, password, first_name, last_name, roles, is_active, created_at, updated_at
+		SELECT id, email, password, first_name, last_name, is_active, created_at, updated_at
 		FROM users
 		WHERE email = $1 AND is_active = true
 	`
@@ -72,7 +72,6 @@ func (r *userSQLRepository) GetUserByEmail(ctx context.Context, email string) (*
 		&user.Password,
 		&user.FirstName,
 		&user.LastName,
-		pq.Array(&user.Roles),
 		&user.IsActive,
 		&user.CreatedAt,
 		&user.UpdatedAt,

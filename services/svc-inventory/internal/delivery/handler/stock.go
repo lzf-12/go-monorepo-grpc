@@ -32,7 +32,7 @@ func NewInventoryHandler(
 
 ) IInventoryHandler {
 	return &inventoryHandler{
-		logger:  log.WithComponent("handler"),
+		logger:  log,
 		usecase: uc,
 		grpcErr: grpcErr,
 	}

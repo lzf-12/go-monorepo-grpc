@@ -1,5 +1,54 @@
-.PHONY: run
+BINARY_NAME=svc-order
+MAIN_PATH=./main.go
 
+.PHONY: build clean run test deps fmt lint build-prod docker-build docker-run docker-run-env docker-stop mock
+
+build:
+	go build -o ${BINARY_NAME} ${MAIN_PATH}
+
+clean:
+	go clean
+	rm -f ${BINARY_NAME}
+
+run:
+	go run ${MAIN_PATH}
+
+test:
+	go test -v ./...
+
+deps:
+	go mod download
+	go mod tidy
+
+fmt:
+	go fmt ./...
+
+lint:
+	golangci-lint run
+
+build-prod:
+	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o ${BINARY_NAME} ${MAIN_PATH}
+
+docker-build:
+	cd ../../ && docker build -t ${BINARY_NAME} -f services/svc-order/Dockerfile .
+
+# Run with docker (standalone)
+docker-run:
+	docker run --rm -p 8080:8080 ${BINARY_NAME}
+
+# Run with docker (with environment file)
+docker-run-env:
+	docker run --rm --env-file .env -p 8080:8080 ${BINARY_NAME}
+
+# Stop docker containers
+docker-stop:
+	docker stop $$(docker ps -q --filter ancestor=${BINARY_NAME})
+
+# Generate mocks
+mock:
+	mockery
+
+# Legacy/Specific targets (keep for compatibility)
 install:
 	go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
 	go get github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen

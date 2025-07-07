@@ -22,7 +22,7 @@ type inventoryUsecase struct {
 
 func NewInventoryUsecase(log logger.Logger, repo repository.IInventorySQLRepository) IInventoryUsecase {
 	return &inventoryUsecase{
-		logger:  log.WithComponent("usecase"),
+		logger:  log,
 		repoSQL: repo,
 	}
 }
