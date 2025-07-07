@@ -16,6 +16,11 @@ const (
 	sqlite   = "sqlite"
 )
 
+type IErrorHandler interface {
+	HandleError(r *http.Request, err error) ErrorResponse
+	HandleAndSendErrorResponse(w http.ResponseWriter, r *http.Request, err error)
+}
+
 // errorHandler centralizes error response handling
 type ErrorHandler struct {
 	debug         bool
@@ -61,8 +66,6 @@ func (eh *ErrorHandler) HandleError(r *http.Request, err error) ErrorResponse {
 					switch db {
 					case "postgres":
 						dbErrRef = "https://www.postgresql.org/docs/current/errcodes-appendix.html"
-					case "sqlite":
-						dbErrRef = "https://www.sqlite.org/rescode.html"
 					default:
 						dbErrRef = ""
 					}
@@ -72,7 +75,7 @@ func (eh *ErrorHandler) HandleError(r *http.Request, err error) ErrorResponse {
 		} else {
 			// log unexpected errors for debugging
 			fmt.Printf("unexpected error: %v\n", err)
-			appErr = ErrInternalServer()
+			appErr = ErrInternalServer(err)
 			status = http.StatusInternalServerError
 		}
 	}
@@ -95,13 +98,13 @@ func (eh *ErrorHandler) HandleError(r *http.Request, err error) ErrorResponse {
 		errResp.Type = dbErrRef
 	}
 
-	// add detail to response if debug enabled
-	if eh.debug && appErr.Details != nil {
+	// list all errors if client 4xx errors
+	if status >= 400 && status < 500 && appErr.Details != nil {
 		errResp.Errors = appErr.Details
 	}
 
-	// force include details if client 4xx errors
-	if status >= 400 && status < 500 && appErr.Details != nil {
+	// force to add detail field if debug enabled
+	if eh.debug && appErr.Details != nil {
 		errResp.Detail = fmt.Sprintf("%v", appErr.Details)
 	}
 

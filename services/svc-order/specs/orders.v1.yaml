@@ -1,0 +1,159 @@
+openapi: 3.0.0
+info:
+  title: Service Order API
+  version: 1.0.0
+servers:
+  - url: /api/v1
+paths:
+  /orders:
+    post:
+      summary: Create New Order
+      # security:
+      #   - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+      responses:
+        '201':
+          description: Success Create New Orders
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateOrderSuccessResponse'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardErrorResponse'
+        '409':
+          description: some products are out of stock
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutofStockResponse'
+        '500':
+          description: internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    AnyValue: {}
+    BaseSuccessResponse:
+      type: object
+      required:
+        - message
+        - status_code
+      properties:
+        message:
+          type: string
+        status_code:
+          type: integer
+        data:
+          $ref: '#/components/schemas/AnyValue'
+    StandardErrorResponse:
+      type: object
+      properties:
+        type:
+          type: string
+        title: 
+          type: string
+        status:
+          type: integer
+        details:
+          type: string
+        instance:
+          type: string
+        timestamp:
+          type: string
+        trace_id:
+          type: string
+        errors:
+          type: object
+          additionalProperties: {}
+    OutofStockResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        status_code:
+          type: integer
+        details:
+          type: object
+          $ref: "#/components/schemas/OutOfStockItems"
+        suggested_actions:
+          type: array
+          items:
+            type: string
+    OutOfStockItems:
+      type: object
+      properties:
+        out_of_stock_items: 
+          type: array
+          items:
+            type: object
+            $ref: "#/components/schemas/OutOfStockItemResp"
+    OutOfStockItemResp:
+      type: object
+      properties:
+        sku:
+          type: string
+        product_id:
+          type: string
+        product_name:
+          type: string
+        requested_quantity:
+          type: string
+        available_quantity:
+          type: string
+    CreateOrderSuccessResponse:
+      allOf:
+       - $ref: '#/components/schemas/BaseSuccessResponse'
+       - type: object
+         required:
+          - data
+         properties:
+            data:
+              $ref: '#/components/schemas/AnyValue'
+    OrderRequest:
+      type: object
+      required:
+        - order_items
+      properties:
+        order_items:
+          type: array
+          items:
+            type: object
+            $ref: '#/components/schemas/StockItemRequest'
+    StockItemRequest:
+      type: object
+      required:
+        - sku
+        - quantity_per_uom
+        - uom
+      properties:
+        sku:
+          type: string
+          x-oapi-codegen-extra-tags:
+            validate: "required,unique"
+        quantity_per_uom:
+          type: number
+          format: double
+          x-oapi-codegen-extra-tags:
+            validate: "required,gt=0"
+        uom:
+          type: string
+          x-oapi-codegen-extra-tags:
+            validate: "required"
+        

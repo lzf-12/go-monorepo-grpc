@@ -56,7 +56,11 @@ var errorRegistry = map[string]AppError{
 		Message: "Invalid JSON syntax",
 		Status:  http.StatusBadRequest,
 	},
-
+	ErrCodeJSONBinding: {
+		Code:    ErrCodeJSONBinding,
+		Message: "Invalid JSON request unable to bind",
+		Status:  http.StatusBadRequest,
+	},
 	// general system errors
 	ErrCodeInternalServer: {
 		Code:    ErrCodeInternalServer,

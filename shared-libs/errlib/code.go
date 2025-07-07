@@ -15,6 +15,7 @@ const (
 	ErrCodeValidation             string = "VALIDATION_ERROR"
 	ErrCodeJSONUnmarshal          string = "JSON_UNMARSHAL_ERROR"
 	ErrCodeJSONSyntax             string = "JSON_SYNTAX_ERROR"
+	ErrCodeJSONBinding            string = "JSON_BINDING_ERROR"
 
 	// db
 	ErrCodeDBConnection    string = "DATABASE_CONNECTION_ERROR"
@@ -26,4 +27,8 @@ const (
 	ErrCodeStorageNotFound string = "STORAGE_NOT_FOUND"
 	ErrCodeStorageAccess   string = "STORAGE_ACCESS_ERROR"
 	ErrCodeDataNotFound    string = "DATA_NOT_FOUND"
+
+	// invetory
+	ErrCodeReservationStock string = "FAILED_RESERVE_STOCK"
+	ErrCodeReleaseStock     string = "FAILED_RELEASE_STOCK"
 )

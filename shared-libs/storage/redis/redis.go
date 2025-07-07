@@ -31,7 +31,7 @@ type RedisCfg struct {
 
 const pingTimeout = 5 * time.Second
 
-func NewRedis(rc RedisCfg) (*Redis, error) {
+func NewRedis(rc *RedisCfg) (*Redis, error) {
 
 	err := validateAddr(rc.Addr)
 	if err != nil {

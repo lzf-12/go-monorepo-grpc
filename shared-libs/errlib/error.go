@@ -64,13 +64,25 @@ func ErrInvalidEmailrOrPassword() *AppError { return NewAppError(ErrCodeInvalidE
 func ErrInvalidInput() *AppError            { return NewAppError(ErrCodeInvalidInput) }
 func ErrUnauthorized() *AppError            { return NewAppError(ErrCodeUnauthorized) }
 func ErrForbidden() *AppError               { return NewAppError(ErrCodeForbidden) }
-func ErrInternalServer() *AppError          { return NewAppError(ErrCodeInternalServer) }
-func ErrRateLimited() *AppError             { return NewAppError(ErrCodeRateLimited) }
-func ErrDBConnection() *AppError            { return NewAppError(ErrCodeDBConnection) }
-func ErrDBQuery() *AppError                 { return NewAppError(ErrCodeDBQuery) }
-func ErrDBTransaction() *AppError           { return NewAppError(ErrCodeDBTransaction) }
-func ErrDBConstraint() *AppError            { return NewAppError(ErrCodeDBConstraint) }
-func ErrDBDuplicate() *AppError             { return NewAppError(ErrCodeDBDuplicate) }
-func ErrDBTimeout() *AppError               { return NewAppError(ErrCodeDBTimeout) }
-func ErrStorageNotFound() *AppError         { return NewAppError(ErrCodeStorageNotFound) }
-func ErrStorageAccess() *AppError           { return NewAppError(ErrCodeStorageAccess) }
+func ErrInternalServer(err error) *AppError {
+	return NewAppErrorWithDetails(ErrCodeInternalServer, map[string]interface{}{"error": err.Error()})
+}
+func ErrRateLimited() *AppError     { return NewAppError(ErrCodeRateLimited) }
+func ErrDBConnection() *AppError    { return NewAppError(ErrCodeDBConnection) }
+func ErrDBQuery() *AppError         { return NewAppError(ErrCodeDBQuery) }
+func ErrDBTransaction() *AppError   { return NewAppError(ErrCodeDBTransaction) }
+func ErrDBConstraint() *AppError    { return NewAppError(ErrCodeDBConstraint) }
+func ErrDBDuplicate() *AppError     { return NewAppError(ErrCodeDBDuplicate) }
+func ErrDBTimeout() *AppError       { return NewAppError(ErrCodeDBTimeout) }
+func ErrStorageNotFound() *AppError { return NewAppError(ErrCodeStorageNotFound) }
+func ErrStorageAccess() *AppError   { return NewAppError(ErrCodeStorageAccess) }
+func ErrValidationError(errlist []map[string]interface{}) *AppError {
+	return NewAppErrorWithDetails(ErrCodeValidation, map[string]interface{}{"invalid_values": errlist})
+}
+func ErrJSONBinding(err error) *AppError {
+	return NewAppErrorWithDetails(ErrCodeJSONBinding, map[string]interface{}{"error": err.Error()})
+}
+
+func ErrReservationStock(details interface{}) *AppError {
+	return NewAppErrorWithDetails(ErrCodeReservationStock, map[string]interface{}{"details": details})
+}

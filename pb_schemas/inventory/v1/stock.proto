@@ -3,101 +3,90 @@ syntax = "proto3";
 package pb_schemas.inventory.v1;
 
 import "google/protobuf/timestamp.proto";
-import "google/rpc/status.proto"; 
 
 option go_package = "ops-monorepo/protogen/go/inventory/v1;inventoryv1";
 
-// Common error types
-message ErrorDetail {
-  string field = 1;       // e.g., "sku", "quantity"
-  string description = 2; // e.g., "SKU cannot be empty"
-}
-
-message InventoryError {
-  string code = 1;                  // e.g., "INVALID_SKU"
-  repeated ErrorDetail details = 2; // Field-specific errors
-  google.rpc.Status status = 3;     // Standard status info
-}
-
-// Data messages (unchanged from your original)
-message SKUInventory {
+// Inventory Item Definition
+message InventoryItem {
   string sku = 1;
-  double current_stock = 2;
-  double reserved_stock = 3;
-  double min_stock_level = 4;
-  double max_stock_level = 5;
-  google.protobuf.Timestamp last_stock_update = 6;
+  double req_qty_per_uom = 2;
+  string uom = 3;
 }
 
-message ReservedSKU {
+// Inventory Status for a single item
+message InventoryStatus {
   string sku = 1;
-  double quantity = 2;
-  google.protobuf.Timestamp reserved_at = 3;
+  double requested_quantity = 2;
+  double available_quantity = 3;
+  double reserved_quantity = 4;
+  double total_quantity = 5;
+  string sku_uom = 6;
+  double sku_price = 7;
+  string sku_currency = 8;
 }
 
-message Reserve {
+message ReservedItem {
+  string id = 1;
+  string order_id = 2;
+
+}
+
+// Request to check inventory
+message StandardInventoryRequest {
   string order_id = 1;
-  string reserve_id = 2;
-  repeated ReservedSKU reserved_skus = 3;
-  google.protobuf.Timestamp created_at = 4;
-  string status = 5;
+  repeated InventoryItem items = 2;
 }
 
-// Requests (unchanged)
-message ReserveStockRequest {
+// Successful response
+message InventoryStatusResponse {
+  repeated InventoryStatus items = 1;
+  google.protobuf.Timestamp timestamp = 2;
+}
+
+message InventoryReservationResponse {
   string order_id = 1;
-  repeated ReservedSKU skus_to_reserve = 2;
+  SuccessProcessedItems success_processed_items = 2;
+  FailedProcessedItems failed_processed_items = 3;
+  google.protobuf.Timestamp timestamp = 4;
 }
 
-message ReleaseStockRequest {
-  string order_id = 1;
-  string reserve_id = 2;
+message ReservationHistory {
+    string id = 1;
+    string order_id = 2;
+    string sku = 3;
+    double quantity = 4;
+    string uom = 5;
+    string status = 6;
+    google.protobuf.Timestamp reserved_at = 7;
+    google.protobuf.Timestamp released_at = 8;
 }
 
-message CheckStockRequest {
-  string sku = 1;
-  double quantity = 2;
+message SuccessProcessedItems {
+  repeated ReservationHistory items = 1;
 }
 
-// Improved Responses
-message CheckStockResponse {
-  oneof result {
-    Success success = 1;
-    InventoryError error = 2;
-  }
-
-  message Success {
-    bool is_available = 1;
-    double available_quantity = 2;
-    SKUInventory inventory = 3;
-  }
+message FailedProcessedItems {
+  repeated InventoryStatus items = 1;
 }
 
-message ReserveStockResponse {
-  oneof result {
-    ReserveSuccess success = 1;
-    InventoryError error = 2;
-  }
-
-  message ReserveSuccess {
-    Reserve reserve = 1;
-  }
+message ErrorDetails {
+  ErrorCode error_code = 1;
+  string error_message = 2;
+}
+enum ErrorCode {
+  UNDEFINED = 0;
+  SKU_NOT_FOUND = 1;
+	SKU_UOM_PAIR_NOT_MATCH = 2;
+  DB_UNAVAILABLE = 3;
+  DB_ERROR_TRANSACTION = 4;
+  INTERNAL_ERROR = 5;
+  INSUFFICIENT_QUANTITY_TO_RESERVE = 6;
+  INSUFFICIENT_QUANTITY_TO_RELEASE = 7;
 }
 
-message ReleaseStockResponse {
-  oneof result {
-    ReleaseSuccess success = 1;
-    InventoryError error = 2;
-  }
-
-  message ReleaseSuccess {
-    Reserve reserve = 1;
-    repeated SKUInventory updated_inventories = 2;
-  }
-}
-
+// Inventory Service
 service InventoryService {
-  rpc CheckStock(CheckStockRequest) returns (CheckStockResponse);
-  rpc ReserveStock(ReserveStockRequest) returns (ReserveStockResponse);
-  rpc ReleaseStock(ReleaseStockRequest) returns (ReleaseStockResponse);
+  rpc CheckStock (StandardInventoryRequest) returns (InventoryStatusResponse) {};
+  rpc ReserveStock (StandardInventoryRequest) returns (InventoryReservationResponse) {};
+  rpc ReleaseStock (StandardInventoryRequest) returns (InventoryReservationResponse) {};
 }

@@ -11,6 +11,9 @@ use (
 	// shared library
 	./shared-libs/env
 	./shared-libs/errlib
+	./shared-libs/grpc
 	./shared-libs/jwt
+	./shared-libs/logger
+	./shared-libs/regexp
 	./shared-libs/storage
 )

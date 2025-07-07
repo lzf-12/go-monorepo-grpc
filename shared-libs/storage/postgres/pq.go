@@ -3,9 +3,6 @@ package storage
 import (
 	"context"
 	"database/sql"
-	"errors"
-	"fmt"
-	"net/url"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -62,20 +59,6 @@ func (p *Postgres) Ping() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	return p.db.PingContext(ctx)
-}
-
-func validateDSN(dsn string) error {
-	parsed, err := url.Parse(dsn)
-	if err != nil {
-		return fmt.Errorf("invalid DSN format: %w", err)
-	}
-	if parsed.Scheme != "postgres" {
-		return errors.New("DSN must use postgres scheme")
-	}
-	if parsed.Host == "" {
-		return errors.New("DSN must include host")
-	}
-	return nil
 }
 
 func (p *Postgres) Close() error {
