@@ -136,7 +136,28 @@ func main() {
 
 The service uses PostgreSQL with the following tables:
 
-### email_logs
+### Entity Relationship Diagram
+
+```
+┌─────────────────────────────────┐
+│           email_logs            │
+├─────────────────────────────────┤
+│ id (PK)                         │
+│ to_email                        │
+│ from_email                      │
+│ subject                         │
+│ body                            │
+│ is_html                         │
+│ status                          │
+│ error                           │
+│ created_at                      │
+│ updated_at                      │
+└─────────────────────────────────┘
+```
+
+### Table Details
+
+#### email_logs
 - `id`: Unique identifier for each email log entry
 - `to_email`: Recipient email address
 - `from_email`: Sender email address

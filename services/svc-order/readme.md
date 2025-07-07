@@ -133,6 +133,67 @@ curl -X POST http://localhost:8081/api/v1/orders \
   -d '{"customer_id": "123", "items": [...]}'
 ```
 
+## Database Schema
+
+The service uses PostgreSQL for order management and tracking.
+
+### Entity Relationship Diagram
+
+```
+┌─────────────────────────────────┐
+│             orders              │
+├─────────────────────────────────┤
+│ id (PK)                         │
+│ user_id                         │
+│ user_email                      │
+│ status                          │
+│ total_amount                    │
+│ currency                        │
+│ created_at                      │
+│ updated_at                      │
+└─────────────────────────────────┘
+                │
+                │ 1:N
+                │
+                ▼
+┌─────────────────────────────────┐
+│          order_items            │
+├─────────────────────────────────┤
+│ id (PK)                         │
+│ order_id (FK)                   │
+│ sku                             │
+│ quantity_per_uom                │
+│ price_per_uom                   │
+│ uom_code                        │
+└─────────────────────────────────┘
+```
+
+### Table Details
+
+#### orders
+- `id`: Unique identifier for each order (UUID)
+- `user_id`: Reference to the user who placed the order
+- `user_email`: Email address of the user
+- `status`: Order status (PENDING, CONFIRMED, CANCELLED)
+- `total_amount`: Total order amount
+- `currency`: Currency code (default: USD)
+- `created_at`: When the order was created
+- `updated_at`: When the order was last updated
+
+#### order_items
+- `id`: Unique identifier for each order item (UUID)
+- `order_id`: Reference to the parent order
+- `sku`: Stock keeping unit identifier
+- `quantity_per_uom`: Quantity per unit of measure
+- `price_per_uom`: Price per unit of measure
+- `uom_code`: Unit of measure code
+
+### Key Relationships
+
+- **orders** can have multiple **order_items** (one-to-many)
+- **order_items** reference inventory SKUs but don't enforce foreign key constraints (loose coupling)
+- Unique constraint on (order_id, sku) prevents duplicate items in the same order
+
 ## Dependencies
 
 ### Service Dependencies

@@ -255,7 +255,41 @@ func main() {
 
 The service uses PostgreSQL with the following tables:
 
-### users
+### Entity Relationship Diagram
+
+```
+┌─────────────────────────────────┐
+│              users              │
+├─────────────────────────────────┤
+│ id (PK)                         │
+│ email                           │
+│ password                        │
+│ first_name                      │
+│ last_name                       │
+│ roles                           │
+│ is_active                       │
+│ created_at                      │
+│ updated_at                      │
+└─────────────────────────────────┘
+                │
+                │ 1:N
+                │
+                ▼
+┌─────────────────────────────────┐
+│         refresh_tokens          │
+├─────────────────────────────────┤
+│ id (PK)                         │
+│ user_id (FK)                    │
+│ token                           │
+│ expires_at                      │
+│ created_at                      │
+│ is_revoked                      │
+└─────────────────────────────────┘
+```
+
+### Table Details
+
+#### users
 - `id`: Unique identifier for each user
 - `email`: User's email address (unique)
 - `password`: Bcrypt hashed password
@@ -266,7 +300,7 @@ The service uses PostgreSQL with the following tables:
 - `created_at`: When the user was created
 - `updated_at`: When the user was last updated
 
-### refresh_tokens
+#### refresh_tokens
 - `id`: Unique identifier for each refresh token
 - `user_id`: Reference to the user
 - `token`: The refresh token value

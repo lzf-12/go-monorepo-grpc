@@ -155,6 +155,67 @@ func main() {
 
 The service uses PostgreSQL with inventory-related tables for tracking stock levels, reservations, and historical data.
 
+### Entity Relationship Diagram
+
+```
+┌─────────────────────┐       ┌─────────────────────┐       ┌─────────────────────┐
+│        uom          │       │ product_categories  │       │      products       │
+├─────────────────────┤       ├─────────────────────┤       ├─────────────────────┤
+│ code (PK)           │       │ id (PK)             │       │ id (PK)             │
+│ name                │       │ name                │       │ name                │
+│ description         │       │ description         │       │ description         │
+│ is_active           │       │ parent_id (FK)      │───┐   │ category_id (FK)    │
+└─────────────────────┘       │ is_active           │   │   │ created_at          │
+            │                 └─────────────────────┘   │   │ updated_at          │
+            │                           │               │   │ discontinued        │
+            │                           │               │   └─────────────────────┘
+            │                           │               │             │
+            │                           │               │             │
+            │                           ▼               │             │
+            │                 ┌─────────────────────┐   │             │
+            │                 │   Self-Reference    │   │             │
+            │                 │   (parent_id)       │◄──┘             │
+            │                 └─────────────────────┘                 │
+            │                                                         │
+            ▼                                                         ▼
+┌─────────────────────┐                                   ┌─────────────────────┐
+│        skus         │                                   │                     │
+├─────────────────────┤                                   │                     │
+│ sku (PK)            │◄──────────────────────────────────┤                     │
+│ product_id (FK)     │                                   │                     │
+│ variant_attributes  │                                   │                     │
+│ default_uom (FK)    │                                   │                     │
+│ is_active           │                                   │                     │
+│ created_at          │                                   │                     │
+│ updated_at          │                                   │                     │
+└─────────────────────┘                                   └─────────────────────┘
+            │                                                         
+            ├─────────────────────┬─────────────────────┐             
+            │                     │                     │             
+            ▼                     ▼                     ▼             
+┌─────────────────────┐   ┌─────────────────────┐   ┌─────────────────────┐
+│   sku_inventory     │   │     sku_prices      │   │ reservation_history │
+├─────────────────────┤   ├─────────────────────┤   ├─────────────────────┤
+│ sku (PK, FK)        │   │ sku (PK, FK)        │   │ id (PK)             │
+│ current_stock       │   │ uom_code (PK)       │   │ order_id            │
+│ reserved_stock      │   │ currency (PK)       │   │ sku (FK)            │
+│ min_stock_level     │   │ unit_price          │   │ quantity            │
+│ max_stock_level     │   │ valid_from (PK)     │   │ uom                 │
+│ last_stock_update   │   │ valid_to            │   │ status              │
+└─────────────────────┘   │ is_active           │   │ reserved_at         │
+                          └─────────────────────┘   │ released_at         │
+                                                    └─────────────────────┘
+```
+
+### Key Relationships
+
+- **product_categories** can have a parent category (self-referencing)
+- **products** belong to a category and can have multiple SKUs
+- **skus** represent specific product variants with attributes
+- **sku_inventory** tracks stock levels for each SKU
+- **sku_prices** supports multiple currencies and time-based pricing
+- **reservation_history** tracks stock reservations for orders
+
 ## Dependencies
 
 ### Service Dependencies

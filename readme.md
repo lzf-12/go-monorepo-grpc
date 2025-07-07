@@ -49,14 +49,14 @@ curl -X POST http://localhost:8080/api/v1/auth/register \
   -d '{"email": "test@example.com", "password": "password123", "first_name": "Test", "last_name": "User"}'
 ```
 
-## Service Ports
+## Services
 
-| Service | gRPC | HTTP | Database |
-|---------|------|------|----------|
-| svc-user | 50053 | 8080 | 5436 |
-| svc-notification | 50052 | - | 5433 |
-| svc-inventory | 50051 | - | 5434 |
-| svc-order | - | 8081 | 5435 |
+| Service | gRPC | HTTP | Database | Documentation |
+|---------|------|------|----------|---------------|
+| svc-user | 50053 | 8080 | 5436 | [README](services/svc-user/README.md) |
+| svc-notification | 50052 | - | 5433 | [README](services/svc-notification/README.md) |
+| svc-inventory | 50051 | - | 5434 | [README](services/svc-inventory/README.md) |
+| svc-order | - | 8081 | 5435 | [README](services/svc-order/readme.md) |
 
 ## Development Commands
 
