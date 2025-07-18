@@ -1,6 +1,6 @@
-# Ops Monorepo
+# Go Monorepo Grpc
 
-A Go microservices monorepo with user authentication, notifications, inventory management, and order processing.
+A Boilerplate or example of monorepo of microservices with grpc implementation. services included: user authentication, notifications, inventory management, and order processing.
 
 ## Quick Start
 
